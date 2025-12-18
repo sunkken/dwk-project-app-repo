@@ -1,4 +1,5 @@
-# The Project
+# The Project App Repository
+- Link to [The Project GitOps Repository](https://github.com/sunkken/dwk-project-gitops-repo)  
 
 ## Setup Overview
 * **Todo App** (`todo-app`)
@@ -17,8 +18,8 @@
   CronJob that creates daily backups of the Postgres database and stores them in a persistent volume.
 
 ## Live Deployments (GKE)
-* **Main branch** → http://34.36.81.209/ (temporary)
-* **Dev branch** → http://34.49.76.228/ (temporary)
+* **Prod branch** → http://34.36.81.209/ (temporary)
+* **Staging branch** → http://34.49.76.228/ (temporary)
 
 Deployments are automated via GitHub Actions on push to any branch.
 
