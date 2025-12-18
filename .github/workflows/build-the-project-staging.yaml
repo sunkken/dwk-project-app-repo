@@ -97,9 +97,10 @@ jobs:
         run: git status && git diff --name-only || true
 
       - name: Create PR to GitOps repo (staging)
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           path: gitops-repo
+          token: ${{ secrets.GITOPS_PR_TOKEN }}
           commit-message: "staging: deploy ${{ github.sha }}"
           branch: staging-update-${{ github.sha }}
           title: "Deploy staging ${{ github.sha }}"
