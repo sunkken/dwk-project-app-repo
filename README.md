@@ -1,18 +1,20 @@
 # The Project
 
 ## Setup Overview
-* **Picsum Writer** (`todo-app/picsum-writer`)
+* **Todo App** (`todo-app`)
+  Serves the todo frontend and current picture.
+* **Todo-App-Writer** (`todo-app-writer`)
   Downloads a random picture every 10 minutes from Picsum Lorem and writes it to a persistent volume.
 * **Todo Backend** (`todo-backend`)
   Provides todo functionality and stores todos either in memory or in Postgres.
-* **Todo App** (`todo-app`)
-  Serves the todo frontend and current picture.
-* **Todo CronJob** (`todo-cronjob`)
-  Automatically generates a random "Read <Wikipedia URL>" todo once every 4 hours and posts it to the backend.
 * **Todo Broadcaster** (`todo-broadcaster`)
   Subscribes to NATS `todos.events` and forwards todo events to an external webhook (Discord/Slack/Telegram). Supports dry-run for local testing.
 * **Postgres Database** (`tododb`)
-  StatefulSet that stores todos persistently.
+  StatefulSet that stores todos persistently.  
+* **Todo CronJob** (`todo-cronjob`)
+  Automatically generates a random "Read <Wikipedia URL>" todo once every 4 hours and posts it to the backend.
+* **Tododb Backup Job** (`tododb-backup`)
+  CronJob that creates daily backups of the Postgres database and stores them in a persistent volume.
 
 ## Live Deployments (GKE)
 * **Main branch** → http://34.36.81.209/ (temporary)
