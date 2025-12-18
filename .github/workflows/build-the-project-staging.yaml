@@ -1,0 +1,109 @@
+name: Build & Deploy the-project (staging)
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  REGISTRY: europe-north1-docker.pkg.dev
+  REPOSITORY: dwk-docker-repository
+  BRANCH: 'staging'  
+
+jobs:
+  build-publish-staging:
+    name: Build, Push, Release the-project to staging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GKE_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Use gcloud CLI
+        run: gcloud info
+
+      - name: Configure Docker for Google Artifact Registry
+        run: gcloud --quiet auth configure-docker europe-north1-docker.pkg.dev
+
+      - name: Build and publish todo-app image
+        working-directory: todo-app
+        run: |-
+          IMAGE="$REGISTRY/$PROJECT_ID/$REPOSITORY/todo-app:$BRANCH-$GITHUB_SHA"
+          docker build --tag "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Build and publish todo-app-writer image
+        working-directory: todo-app-writer
+        run: |-
+          IMAGE="$REGISTRY/$PROJECT_ID/$REPOSITORY/todo-app-writer:$BRANCH-$GITHUB_SHA"
+          docker build --tag "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Build and publish todo-backend image
+        working-directory: todo-backend
+        run: |-
+          IMAGE="$REGISTRY/$PROJECT_ID/$REPOSITORY/todo-backend:$BRANCH-$GITHUB_SHA"
+          docker build --tag "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Build and publish todo-broadcaster image
+        working-directory: todo-broadcaster
+        run: |-
+          IMAGE="$REGISTRY/$PROJECT_ID/$REPOSITORY/todo-broadcaster:$BRANCH-$GITHUB_SHA"
+          docker build --tag "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Build and publish todo-cronjob image
+        working-directory: todo-cronjob
+        run: |-
+          IMAGE="$REGISTRY/$PROJECT_ID/$REPOSITORY/todo-cronjob:$BRANCH-$GITHUB_SHA"
+          docker build --tag "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Checkout gitops repo
+        uses: actions/checkout@v6
+        with:
+          repository: sunkken/dwk-project-gitops-repo
+          ssh-key: ${{ secrets.GITOPS_DEPLOY_KEY }}
+          path: gitops-repo
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Update staging overlay kustomization images
+        working-directory: gitops-repo/overlays/staging
+        run: |
+          kustomize edit set image PROJECT/todo-app=$REGISTRY/$PROJECT_ID/$REPOSITORY/todo-app:$BRANCH-$GITHUB_SHA
+          kustomize edit set image PROJECT/todo-app-writer=$REGISTRY/$PROJECT_ID/$REPOSITORY/todo-app-writer:$BRANCH-$GITHUB_SHA
+          kustomize edit set image PROJECT/todo-backend=$REGISTRY/$PROJECT_ID/$REPOSITORY/todo-backend:$BRANCH-$GITHUB_SHA
+          kustomize edit set image PROJECT/todo-broadcaster=$REGISTRY/$PROJECT_ID/$REPOSITORY/todo-broadcaster:$BRANCH-$GITHUB_SHA
+          kustomize edit set image PROJECT/todo-cronjob=$REGISTRY/$PROJECT_ID/$REPOSITORY/todo-cronjob:$BRANCH-$GITHUB_SHA
+
+      - name: Show diff (staging)
+        working-directory: gitops-repo/overlays/staging
+        run: git status && git diff --name-only || true
+
+      - name: Create PR to GitOps repo (staging)
+        uses: peter-evans/create-pull-request@v6
+        with:
+          path: gitops-repo
+          commit-message: "staging: deploy ${{ github.sha }}"
+          branch: staging-update-${{ github.sha }}
+          title: "Deploy staging ${{ github.sha }}"
+          body: |
+            Staging deployment
+            Images built from app-repo commit ${{ github.sha }}
+          base: main
