@@ -1,0 +1,42 @@
+### Get status
+GET http://localhost:5000/todos/status
+
+### Get all todos
+GET http://localhost:5000/todos
+
+### Get specific todo
+GET http://localhost:5000/todos/2
+
+### Get todo by non-existing id
+GET http://localhost:5000/todos/-1
+
+### Get todo by invalid ID
+GET http://localhost:5000/todos/fssa
+
+### Add new todo
+POST http://localhost:5000/todos
+Content-Type: application/json
+
+{
+    "text": "Testing and RESTing"
+}
+
+### Mark first todo as done (id 1)
+PUT http://localhost:5000/todos/1
+
+### Mark non-existing todo (expect 404)
+PUT http://localhost:5000/todos/99999
+
+### Add todo (over 140 chars)
+POST http://localhost:5000/todos
+Content-Type: application/json
+
+{
+    "text": "This is a very long todo meant to test the backend validation. It should be over 140 characters, so it keeps going and going and going and does not stop until we are past the limit."
+}
+
+### Delete a todo by ID
+DELETE http://localhost:5000/todos/1
+
+### Delete non-existing todo
+DELETE http://localhost:5000/todos/-1

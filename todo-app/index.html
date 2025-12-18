@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Todo App</title>
+</head>
+<body>
+  <h1>Todo App</h1>
+  <p>App is under construction</p>
+
+  <div id="image-section">
+    <img id="main-image" src="/image.jpg" alt="Random image" onerror="this.style.display='none'">
+    <p id="no-image" style="display:none;">No image yet</p>
+  </div>
+
+  <!-- Input form and button -->
+  <div>
+    <input id="todo-input" type="text" maxlength="140" placeholder="Enter a todo (max 140 chars)">
+    <button id="create-btn">Create todo</button>
+  </div>
+
+  <section>
+    <h2>Todo</h2>
+    <ul id="todo-list"></ul>
+  </section>
+
+  <section>
+    <h2>Done</h2>
+    <ul id="done-list"></ul>
+  </section>
+
+  <footer>DevOps with Kubernetes 2025</footer>
+
+<script>
+const todoList = document.getElementById('todo-list')
+const doneList = document.getElementById('done-list')
+const input = document.getElementById('todo-input')
+const btn = document.getElementById('create-btn')
+
+// Fetch and render todos
+async function loadTodos() {
+  try {
+    const res = await fetch('/api/todos')
+    const todos = await res.json()
+    renderTodos(todos)
+  } catch (err) {
+    console.error('Failed to load todos', err)
+  }
+}
+
+function renderTodos(todos) {
+  todoList.innerHTML = ''
+  doneList.innerHTML = ''
+
+  todos.filter(t => !t.done).forEach(todo => {
+    const li = document.createElement('li')
+    li.textContent = todo.text
+    const btn = document.createElement('button')
+    btn.textContent = 'Mark as done'
+    btn.style.marginLeft = '8px'
+    btn.addEventListener('click', () => markDone(todo.id))
+    li.appendChild(btn)
+    todoList.appendChild(li)
+  })
+
+  todos.filter(t => t.done).forEach(todo => {
+    const li = document.createElement('li')
+    li.textContent = todo.text
+    doneList.appendChild(li)
+  })
+}
+
+// Create new todo
+btn.addEventListener('click', async () => {
+  const text = input.value.trim()
+  if (!text) return
+  if (text.length > 140) return alert('Todo must be under 140 characters.')
+  try {
+    const res = await fetch('/api/todos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    })
+    if (!res.ok) throw new Error('Failed to create todo')
+    input.value = ''
+    loadTodos()
+  } catch (err) {
+    console.error(err)
+    alert('Error creating todo')
+  }
+})
+
+async function markDone(id) {
+  try {
+    const res = await fetch(`/api/todos/${id}`, { method: 'PUT' })
+    if (!res.ok) throw new Error('Failed to mark done')
+    loadTodos()
+  } catch (err) {
+    console.error(err)
+    alert('Error updating todo')
+  }
+}
+
+// Initial load
+loadTodos()
+</script>
+
+</body>
+</html>

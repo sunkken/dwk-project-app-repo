@@ -1,0 +1,79 @@
+services:
+  nats:
+    image: nats:2.11-alpine
+    command: ["-js"]
+    ports:
+      - "4222:4222"
+    environment:
+      - TZ=UTC
+
+  todo-backend:
+    build:
+      context: ./todo-backend
+    image: sunqen/todo-backend:latest
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+    ports:
+      - "5000:5000"
+
+  todo-app:
+    build:
+      context: ./todo-app
+    image: sunqen/todo-app:latest
+    environment:
+      NODE_ENV: production
+      WORKDIR: /usr/src/app
+    volumes:
+      - image-volume:/usr/src/app/image
+    env_file:
+      - .env
+    ports:
+      - "1234:3000"
+    depends_on:
+      - todo-backend
+      - nats
+
+  todo-app-writer:
+    build:
+      context: ./todo-app/picsum-writer
+    image: sunqen/todo-app-writer:latest
+    environment:
+      NODE_ENV: production
+      WORKDIR: /usr/src/app
+    volumes:
+      - image-volume:/usr/src/app/image
+    env_file:
+      - .env
+    depends_on:
+      - todo-app
+      - nats
+
+  todo-cronjob:
+    build:
+      context: ./todo-cronjob
+    image: sunqen/todo-cronjob:latest
+    environment:
+      NODE_ENV: production
+    env_file:
+      - .env
+    depends_on:
+      - todo-backend
+      - nats
+    command: ["node", "index.js"]
+
+  todo-broadcaster:
+    build:
+      context: ./todo-broadcaster
+    image: sunqen/todo-broadcaster:latest
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      WEBHOOK_DRY_RUN: "true"
+    depends_on:
+      - nats
+
+volumes:
+  image-volume:
