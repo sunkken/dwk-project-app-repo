@@ -107,4 +107,4 @@ jobs:
           body: |
             Staging deployment
             Images built from app-repo commit ${{ github.sha }}
-          base: main
+          base: staging

@@ -117,4 +117,4 @@ jobs:
             Production deployment
             Images built from app-repo tag: ${{ env.IMAGE_TAG }}
             Please review carefully before merging.
-          base: main
+          base: prod
